@@ -21,6 +21,7 @@ int FADER = 3;
 int REED_PIN = 9; // Pin connected to reed switch
 int brightness = 0;
 int fadeamount = 1;
+int flipflop = 1;
  
 void setup() {  
   // counting the variable i from 0 to 15              
@@ -33,18 +34,30 @@ void setup() {
   pinMode(TIP2, OUTPUT);
   digitalWrite(TIP1, LOW);
   digitalWrite(TIP2, LOW);
-  analogWrite(FADER, brightness);
-  digitalWrite(TIP1, LOW);
-  digitalWrite(TIP2, LOW);       
+  analogWrite(FADER, brightness);    
   pinMode(REED_PIN, INPUT_PULLUP);
 
 }
  
 void loop() {
+  
   // Read the state of the switch, If the pin reads low, the switch is closed.
   int proximity = digitalRead(REED_PIN); 
-  if (proximity == LOW) {
-    for (int i=pinsCount-1; i>0; i=i-1){ 
+  
+  if (proximity == HIGH) {
+    //red lights
+    if (flipflop == 1) {
+      digitalWrite(TIP1, LOW);
+      digitalWrite(TIP2, HIGH);
+      flipflop = 0;
+    } else {
+      digitalWrite(TIP1, HIGH);
+      digitalWrite(TIP2, LOW);
+      flipflop = 1;
+     }
+      
+      //chaser and fader
+    for (int i=pinsCount-1; i>=0; i=i-1){ 
       // switching the LED at index i on   
       digitalWrite(pins[i], HIGH);          
       //we use this time to fade up/down the pulsing LEDs
@@ -59,19 +72,13 @@ void loop() {
       } 
       // switching the LED at index i off
       digitalWrite(pins[i], LOW);           
-    }  
-    if(digitalRead(TIP1)==LOW) {
-      //set 1 on, set 2 off
-      digitalWrite(TIP1, HIGH);
-      digitalWrite(TIP2, LOW);
-    } else {
-      //set 2 on set 1 off
-      digitalWrite(TIP1, LOW);
-      digitalWrite(TIP2, HIGH);
-      }
-  }
+    } 
+
+     //if proximity = low 
+  } else {
     //if out of loop turn off all lights as reed switch open
     digitalWrite(TIP1, LOW);
     digitalWrite(TIP2, LOW);
     analogWrite(FADER, 0);
+  }
 }
