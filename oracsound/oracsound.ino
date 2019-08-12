@@ -1,46 +1,70 @@
-/*
-    This example plays a random file (001 to 010) forever
-    It uses the playFileAndWait() command so no extra code is needed, it will play another file as soon as the previous one finishes
-    If it doesn't work, try reversing the RX/TX wires as that's probably going to be the most common mistake
-    Also check that the player's BUSY line is connected to Arduino pin 3
-    Finally check that the player has a speaker connected as well as ground and VCC
-    file1 is start sound
-    file2 is working sound
-    file3 is stop sound
-*/
-
-#include "SoftwareSerial.h"
-#include "MP3FLASH16P.h"
-MP3FLASH16P myPlayer;
-int REED_PIN = 9; // Pin connected to reed switch
-
+const int REED_PIN = 2; // Pin connected to reed switch
+const int startPin = 4;
+const int workingPin = 5;
+const int stopPin = 6;
+const int led = 17;
+int proximity = 1;
+unsigned long timeRunning;
+unsigned long timeNow;
+  
 void setup() {
-    // Init the player with the busy pin connected to Arduino pin 3
-    myPlayer.init(3);
-}
+  pinMode(startPin, OUTPUT);
+  pinMode(workingPin, OUTPUT);
+  pinMode(stopPin, OUTPUT);
+  pinMode(led, OUTPUT);
+  pinMode(REED_PIN, INPUT);
+
+  //set pins to off
+  digitalWrite(startPin, HIGH);
+  digitalWrite(workingPin, HIGH);
+  digitalWrite(stopPin, HIGH);
+  digitalWrite(led, LOW);
  
+}
+
 void loop() {
 
   // Read the state of the switch,
-  int proximity = digitalRead(REED_PIN); 
-  
-  if (proximity == HIGH) {
-  
-    // play start sound
-    myPlayer.playFileAndWait(1, 30);
+  proximity = digitalRead(REED_PIN); 
 
-    // then play working sound
-    myPlayer.playFile(2, 30);
-    
-    proximity = digitalRead(REED_PIN); 
-    
-    while (proximity ==HIGH) {
-    //myPlayer.playFile(2, 30);
-    //make short loop 1 sec
-    myPlayer.playFileAndWait(2, 30); 
-    proximity = digitalRead(REED_PIN);
-    }
-    myPlayer.playFileAndWait(3, 30);
+  if (proximity == LOW) {  
+      digitalWrite(startPin, LOW);
 
+      delay(200);
+      digitalWrite(startPin, HIGH);
+      delay(1000);
+      
+      digitalWrite(workingPin, LOW);
+      delay(220);
+      digitalWrite(workingPin, HIGH);
+      delay(1000);
+
+
+      //set time
+      timeRunning = millis();
+      while (proximity == LOW) {
+        proximity = digitalRead(REED_PIN);
+        digitalWrite(led, HIGH);
+        timeNow = millis();
+        //the working sound lasts about 30 secs, this replays it when it fades out
+        if(timeNow >= (timeRunning + 30000)) {
+              digitalWrite(workingPin, LOW);
+              delay(220);
+              digitalWrite(workingPin, HIGH);
+              timeRunning = millis();
+              
+        }
+
+      }   
+          digitalWrite(led, LOW);
+          digitalWrite(stopPin, LOW);
+          delay(220);
+          digitalWrite(stopPin, HIGH);
+          delay(1000);
+          exit;
+
+  } else {
+    delay(100);
   }
+
 }
